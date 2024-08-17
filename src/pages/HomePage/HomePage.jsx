@@ -1,36 +1,37 @@
-import { lazy, Suspense, useEffect, useState } from "react";
-import { fetchFilms } from "../../tmdb-api";
-const ErrorMessage = lazy(() =>
-  import("../../components/ErrorMessage/ErrorMessage")
-);
-const Loader = lazy(() => import("../../components/Loader/Loader"));
-const MovieList = lazy(() => import("../../components/MovieList/MovieList"));
+import React, { useState, useEffect } from 'react';
+import { fetchTrendingMovies } from '../../tmbd-api';
+import MovieList from '../../components/MovieList/MovieList';
+import Loader from '../../components/Loader/Loader';
+import ErrorMessage from '../../components/ErrorMessage/ErrorMessage';
 
-export default function HomePage() {
-  const [film, setFilm] = useState([]);
-  const [loader, setLoader] = useState(false);
-  const [error, setError] = useState(false);
+const HomePage = () => {
+  const [movies, setMovies] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function getImages() {
+    const loadMovies = async () => {
       try {
-        setLoader(true);
-        setError(false);
-        const promise = await fetchFilms();
-        setFilm(promise.results);
-      } catch {
-        setError(true);
+        const data = await fetchTrendingMovies();
+        setMovies(data);
+      } catch (err) {
+        setError('Failed to fetch trending movies. Please try again later.');
       } finally {
-        setLoader(false);
+        setLoading(false);
       }
-    }
-    getImages();
+    };
+
+    loadMovies();
   }, []);
+
   return (
-    <Suspense fallback={<div>Loading page code...</div>}>
-      {loader && <Loader />}
-      {error && <ErrorMessage />}
-      <MovieList films={film} />
-    </Suspense>
+    <div>
+      <h1>Trending Movies</h1>
+      {loading && <Loader />}
+      {error && <ErrorMessage message={error} />}
+      {movies.length > 0 && <MovieList movies={movies} />}
+    </div>
   );
-}
+};
+
+export default HomePage;

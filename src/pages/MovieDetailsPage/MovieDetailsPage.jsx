@@ -1,84 +1,39 @@
-import { Link, Outlet, useLocation, useParams } from "react-router-dom";
-import { fetchFilmsByNavigationId } from "../../tmdb-api";
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
-const ErrorMessage = lazy(() =>
-  import("../../components/ErrorMessage/ErrorMessage")
-);
-const Loader = lazy(() => import("../../components/Loader/Loader"));
-import css from "./MovieDetailsPage.module.css";
+import  { useState } from 'react';
+import { searchMovies } from '../../tmbd-api';
+import MovieList from '../../components/MovieList/MovieList';
+import SearchForm from '../../components/SearchForm/SearchForm';
+import ErrorMessage from '../../components/ErrorMessage/ErrorMessage';
+import Loader from '../../components/Loader/Loader';
 
-export default function MovieDetailsPage() {
-  const [film, setFilm] = useState([]);
-  const [loader, setLoader] = useState(false);
-  const [error, setError] = useState(false);
-  const [genres, setGenres] = useState("");
-  const { movieId } = useParams();
-  const location = useLocation();
-  const backLinkRef = useRef(location.state ?? "/");
+const MoviesPage = () => {
+  const [query, setQuery] = useState('');
+  const [movies, setMovies] = useState([]);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    async function getImages() {
-      try {
-        setLoader(true);
-        setError(false);
-        const promise = await fetchFilmsByNavigationId(movieId);
-        setFilm(promise);
-        setGenres(
-          promise.genres.map((item) => {
-            return item.name + " ";
-          })
-        );
-      } catch {
-        setError(true);
-      } finally {
-        setLoader(false);
-      }
+  const handleSearch = async (query) => {
+    setQuery(query);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const data = await searchMovies(query);
+      setMovies(data);
+    } catch (err) {
+      setError('Something went wrong. Please try again later.');
+    } finally {
+      setLoading(false);
     }
-    getImages();
-  }, [movieId]);
+  };
 
   return (
-    <main>
-      <Suspense fallback={<div>Loading page code...</div>}>
-        {loader && <Loader />}
-        {error && <ErrorMessage />}
-      </Suspense>
-      <Link className={css.go_back_btn} to={backLinkRef.current}>
-        Go back
-      </Link>
-      <section className={css.details}>
-        <img
-          className={css.img}
-          src={"https://image.tmdb.org/t/p/w500/" + film.poster_path}
-          alt={film.title}
-        />
-        <div className={css.info_container}>
-          <h1>{film.title}</h1>
-          <p>User score: {film.vote_average * 10}%</p>
-          <h2>Overview</h2>
-          <p>{film.overview}</p>
-          <h3>Genres</h3>
-          <p>{genres}</p>
-        </div>
-      </section>
-      <section className={css.aditional_info}>
-        <h2 className={css.aditional_title}>Aditional information</h2>
-        <ul className={css.aditional_list}>
-          <li className={css.aditional_item}>
-            <Link className={css.aditional_link} to="cast">
-              Cast
-            </Link>
-          </li>
-          <li className={css.aditional_item}>
-            <Link className={css.aditional_link} to="reviews">
-              Reviews
-            </Link>
-          </li>
-        </ul>
-        <Suspense fallback={<div>Loading page code...</div>}>
-          <Outlet />
-        </Suspense>
-      </section>
-    </main>
+    <div>
+      <SearchForm onSubmit={handleSearch} />
+      {loading && <Loader />}
+      {error && <ErrorMessage message={error} />}
+      {movies.length > 0 && <MovieList movies={movies} />}
+    </div>
   );
-}
+};
+
+export default MoviesPage;

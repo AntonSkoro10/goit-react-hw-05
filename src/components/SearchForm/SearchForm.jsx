@@ -1,20 +1,30 @@
-import { IoSearchSharp } from "react-icons/io5";
-import css from "./SearchForm.module.css";
+import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 
-export default function SearchForm({ setQuery, onFilter }) {
+const SearchForm = ({ onSubmit }) => {
+  const [query, setQuery] = useState('');
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    setQuery(e.target.search.value);
-    onFilter(e.target.search.value);
-    e.target.reset();
+    if (query.trim() === '') {
+      toast.error('Please enter a search query.');
+      return;
+    }
+    onSubmit(query);
+    setQuery('');
   };
 
   return (
-    <form className={css.form} onSubmit={handleSubmit}>
-      <input className={css.input} type="text" name="search" />
-      <button className={css.btn} type="submit">
-        <IoSearchSharp />
-      </button>
+    <form onSubmit={handleSubmit}>
+      <input
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search for movies..."
+      />
+      <button type="submit">Search</button>
     </form>
   );
-}
+};
+
+export default SearchForm;

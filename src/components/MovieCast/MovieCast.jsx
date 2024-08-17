@@ -1,52 +1,17 @@
-import { fetchCreditsByNavigationId } from "../../tmdb-api";
-import { useParams } from "react-router-dom";
-import { lazy, Suspense, useEffect, useState } from "react";
-const ErrorMessage = lazy(() =>
-  import("../../components/ErrorMessage/ErrorMessage")
-);
-const Loader = lazy(() => import("../../components/Loader/Loader"));
-import css from "./MovieCast.module.css";
 
-export default function MovieCast() {
-  const [credits, setCredits] = useState([]);
-  const [loader, setLoader] = useState(false);
-  const [error, setError] = useState(false);
-  const { movieId } = useParams();
-  useEffect(() => {
-    async function getActor() {
-      try {
-        setLoader(true);
-        setError(false);
-        const promise = await fetchCreditsByNavigationId(movieId);
-        setCredits(promise.cast.slice(0, 3));
-      } catch {
-        setError(true);
-      } finally {
-        setLoader(false);
-      }
-    }
-    getActor();
-  }, [movieId]);
-  return (
-    <>
-      <Suspense fallback={<div>Loading page code...</div>}>
-        {loader && <Loader />}
-        {error && <ErrorMessage />}
-      </Suspense>
-      <ul className={css.list}>
-        {credits.map((item) => {
-          return (
-            <li className={css.item} key={item.id}>
-              <img
-                src={"https://image.tmdb.org/t/p/w500/" + item.profile_path}
-                alt={item.origin_name}
-                className={css.img}
-              />
-              <p className={css.name}>{item.name}</p>
-            </li>
-          );
-        })}
-      </ul>
-    </>
-  );
-}
+
+const MovieCast = ({ cast }) => (
+  <div>
+    <h2>Cast</h2>
+    <ul>
+      {cast.map(actor => (
+        <li key={actor.id}>
+          <img src={`https://image.tmdb.org/t/p/w200${actor.profile_path}`} alt={actor.name} />
+          <p>{actor.name}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+export default MovieCast;

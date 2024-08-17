@@ -1,60 +1,32 @@
-import { lazy, Suspense, useEffect, useState } from "react";
-import { fetchFilmOnSearchQuery } from "../../tmdb-api";
+import React from 'react';
+import { useState } from 'react';
+import { searchMovies } from '../../tmbd-api';
+import MovieList from '../../components/MovieList/MovieList';
 
-const ErrorMessage = lazy(() =>
-  import("../../components/ErrorMessage/ErrorMessage")
-);
-const Loader = lazy(() => import("../../components/Loader/Loader"));
-const MovieList = lazy(() => import("../../components/MovieList/MovieList"));
-import css from "./MoviesPage.module.css";
-import SearchForm from "../../components/SearchForm/SerachForm";
-import { useSearchParams } from "react-router-dom";
+const MoviesPage = () => {
+  const [query, setQuery] = useState('');
+  const [movies, setMovies] = useState([]);
 
-export default function MoviesPage() {
-  const [film, setFilm] = useState([]);
-  const [query, setQuery] = useState("");
-  const [loader, setLoader] = useState(false);
-  const [error, setError] = useState(false);
-
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const changeRequestFilter = (newRequest) => {
-    setSearchParams({ request: newRequest });
-    setQuery(newRequest);
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    const data = await searchMovies(query);
+    setMovies(data);
   };
 
-  useEffect(() => {
-    const currentQuery = searchParams.get("request") || "";
-    setQuery(currentQuery);
-  }, [searchParams]);
-
-  useEffect(() => {
-    async function getImages() {
-      if (query.trim() === "") {
-        return;
-      }
-      try {
-        setLoader(true);
-        setError(false);
-        const promise = await fetchFilmOnSearchQuery(query);
-        setFilm(promise.results);
-      } catch {
-        setError(true);
-      } finally {
-        setLoader(false);
-      }
-    }
-    getImages();
-  }, [query]);
-
   return (
-    <section className={css.search}>
-      <SearchForm setQuery={setQuery} onFilter={changeRequestFilter} />
-      <Suspense fallback={<div>Loading page code...</div>}>
-        {loader && <Loader />}
-        {error && <ErrorMessage />}
-        {film.length > 0 && <MovieList films={film} />}
-      </Suspense>
-    </section>
+    <div>
+      <form onSubmit={handleSearch}>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search movies..."
+        />
+        <button type="submit">Search</button>
+      </form>
+      {movies.length > 0 && <MovieList movies={movies} />}
+    </div>
   );
-}
+};
+
+export default MoviesPage;
